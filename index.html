@@ -14,6 +14,8 @@
 
     <style>
 
+        /* Полный CSS стиль с улучшенным дизайном */
+
         * {
 
             box-sizing: border-box;
@@ -54,8 +56,6 @@
 
         
 
-        /* ШАПКА */
-
         .header {
 
             text-align: center;
@@ -87,8 +87,6 @@
         }
 
         
-
-        /* РЕСУРСЫ */
 
         .resources-grid {
 
@@ -174,8 +172,6 @@
 
         
 
-        /* ЗДАНИЯ */
-
         .buildings-grid {
 
             display: grid;
@@ -258,8 +254,6 @@
 
         
 
-        /* ТАЙМЕР */
-
         .timer-status {
 
             background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
@@ -301,8 +295,6 @@
         }
 
         
-
-        /* КНОПКИ ДЕЙСТВИЙ */
 
         .actions-bar {
 
@@ -376,8 +368,6 @@
 
         
 
-        /* СТАТУС БАР */
-
         .status-bar {
 
             background: rgba(25, 55, 75, 0.7);
@@ -394,6 +384,58 @@
 
         }
 
+        
+
+        .upgrade-menu {
+
+            display: none;
+
+            position: fixed;
+
+            top: 50%;
+
+            left: 50%;
+
+            transform: translate(-50%, -50%);
+
+            background: linear-gradient(135deg, #1e5f75 0%, #164b60 100%);
+
+            padding: 20px;
+
+            border-radius: 16px;
+
+            z-index: 1000;
+
+            width: 90%;
+
+            max-width: 400px;
+
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+
+        }
+
+        
+
+        .overlay {
+
+            display: none;
+
+            position: fixed;
+
+            top: 0;
+
+            left: 0;
+
+            width: 100%;
+
+            height: 100%;
+
+            background: rgba(0,0,0,0.7);
+
+            z-index: 999;
+
+        }
+
     </style>
 
 </head>
@@ -401,8 +443,6 @@
 <body>
 
     <div class="container">
-
-        <!-- ШАПКА -->
 
         <div class="header">
 
@@ -413,8 +453,6 @@
         </div>
 
         
-
-        <!-- РЕСУРСЫ -->
 
         <div class="resources-grid">
 
@@ -484,8 +522,6 @@
 
         
 
-        <!-- ЗДАНИЯ -->
-
         <div class="buildings-grid">
 
             <div class="building-card" data-type="castle">
@@ -546,8 +582,6 @@
 
         
 
-        <!-- ТАЙМЕР -->
-
         <div class="timer-status" id="timerStatus">
 
             ⏳ До сбора: <span id="timer">12:00:00</span>
@@ -564,8 +598,6 @@
 
         
 
-        <!-- КНОПКИ ДЕЙСТВИЙ -->
-
         <div class="actions-bar">
 
             <button class="action-btn" id="collectBtn" onclick="collectResources()">
@@ -578,7 +610,7 @@
 
             
 
-            <button class="action-btn" onclick="inviteFriends()">
+            <button class="action-btn" onclick="showReferralPopup()">
 
                 <span class="btn-icon">👥</span>
 
@@ -588,7 +620,7 @@
 
             
 
-            <button class="action-btn" onclick="upgradeBuilding()">
+            <button class="action-btn" onclick="showUpgradeMenu()">
 
                 <span class="btn-icon">⚡</span>
 
@@ -610,11 +642,9 @@
 
         
 
-        <!-- СТАТУС БАР -->
-
         <div class="status-bar">
 
-            👑 Игрок: <span id="player-name">Балтий</span> | 👥 Рефералов: <span id="referrals-count">0</span>
+            👑 Игрок: <span id="player-name">Гость</span> | 👥 Рефералов: <span id="referrals-count">0</span>
 
         </div>
 
@@ -622,49 +652,29 @@
 
 
 
-    <script>
+    <div class="overlay" id="overlay" onclick="hideMenus()"></div>
 
-        // Инициализация Telegram WebApp
+    
+
+    <div class="upgrade-menu" id="upgradeMenu">
+
+        <h3>⚡ Улучшение зданий</h3>
+
+        <div id="upgrade-options"></div>
+
+        <button onclick="hideMenus()" style="margin-top: 15px; width: 100%">Закрыть</button>
+
+    </div>
+
+
+
+    <script>
 
         const tg = window.Telegram.WebApp;
 
-        
-
-        // Настройки игры
-
-        const COLLECTION_COOLDOWN = 12 * 60 * 60 * 1000; // 12 часов
-
-        let lastCollectionTime = Date.now() - 6 * 60 * 60 * 1000; // 6 часов назад
-
-        let resources = {
-
-            gems: 5.0,
-
-            food: 120,
-
-            wood: 80,
-
-            stone: 60
-
-        };
+        let userData = null;
 
         
-
-        let buildings = {
-
-            castle: { level: 1, production: 0.1 },
-
-            farm: { level: 1, production: 5 },
-
-            sawmill: { level: 1, production: 3 },
-
-            mine: { level: 1, production: 2 }
-
-        };
-
-        
-
-        // Основная функция инициализации
 
         function initGame() {
 
@@ -678,63 +688,45 @@
 
             
 
-            // Загружаем данные пользователя
-
             loadUserData();
-
-            
-
-            // Запускаем таймер
 
             setInterval(updateTimer, 1000);
 
-            updateTimer();
-
-            
-
-            // Обновляем отображение ресурсов
-
-            updateResourcesDisplay();
-
         }
 
         
 
-        // Загрузка данных пользователя (заглушка)
+        async function loadUserData() {
 
-        function loadUserData() {
+            try {
 
-            // Здесь будет загрузка реальных данных из бота
+                tg.sendData(JSON.stringify({action: 'get_user_data'}));
 
-            console.log("Загрузка данных пользователя...");
+            } catch (error) {
 
-        }
+                console.error("Error loading user data:", error);
 
-        
-
-        // Обновление отображения ресурсов
-
-        function updateResourcesDisplay() {
-
-            document.getElementById('gems-count').textContent = resources.gems.toFixed(1);
-
-            document.getElementById('food-count').textContent = resources.food;
-
-            document.getElementById('wood-count').textContent = resources.wood;
-
-            document.getElementById('stone-count').textContent = resources.stone;
+            }
 
         }
 
         
-
-        // Обновление таймера
 
         function updateTimer() {
 
-            const now = Date.now();
+            if (!userData || !userData.last_collection) return;
 
-            const timeLeft = COLLECTION_COOLDOWN - (now - lastCollectionTime);
+            
+
+            const lastCollection = new Date(userData.last_collection);
+
+            const now = new Date();
+
+            const timePassed = now - lastCollection;
+
+            const timeLeft = 12 * 60 * 60 * 1000 - timePassed;
+
+            
 
             const timerElement = document.getElementById('timer');
 
@@ -746,8 +738,6 @@
 
             if (timeLeft <= 0) {
 
-                // Можно собирать!
-
                 timerElement.textContent = "00:00:00";
 
                 timerStatus.innerHTML = "✅ Ресурсы готовы к сбору!";
@@ -757,8 +747,6 @@
                 collectBtn.disabled = false;
 
             } else {
-
-                // Обновляем таймер
 
                 const hours = Math.floor(timeLeft / (1000 * 60 * 60));
 
@@ -786,111 +774,61 @@
 
         
 
-        // Сбор ресурсов
+        async function collectResources() {
 
-        function collectResources() {
+            try {
 
-            const now = Date.now();
+                tg.sendData(JSON.stringify({action: 'collect_resources'}));
 
-            if (now - lastCollectionTime < COLLECTION_COOLDOWN) {
+            } catch (error) {
 
-                tg.showAlert("❌ Еще не время для сбора!");
+                console.error("Error collecting resources:", error);
 
-                return;
+                tg.showAlert("Ошибка при сборе ресурсов. Попробуйте позже.");
 
             }
-
-            
-
-            // Отправляем команду боту на сбор
-
-            tg.sendData(JSON.stringify({
-
-                action: 'collect_resources',
-
-                user_id: tg.initDataUnsafe.user.id,
-
-                timestamp: now
-
-            }));
-
-            
-
-            // Временно обновляем интерфейс
-
-            resources.gems += buildings.castle.production * 12;
-
-            resources.food += buildings.farm.production * 12;
-
-            resources.wood += buildings.sawmill.production * 12;
-
-            resources.stone += buildings.mine.production * 12;
-
-            
-
-            lastCollectionTime = now;
-
-            updateResourcesDisplay();
-
-            updateTimer();
-
-            
-
-            tg.showPopup({
-
-                title: "🎁 Ресурсы собраны!",
-
-                message: `За 12 часов получено:\n+${(buildings.castle.production * 12).toFixed(1)} 💎\n+${buildings.farm.production * 12} 🌾\n+${buildings.sawmill.production * 12} 🪵\n+${buildings.mine.production * 12} ⛰️`,
-
-                buttons: [{ type: "ok" }]
-
-            });
 
         }
 
         
 
-        // Приглашение друзей
+        function showReferralPopup() {
 
-        function inviteFriends() {
+            const referralLink = `https://t.me/CastleOnTON_bot?start=ref_${tg.initDataUnsafe.user.id}`;
+
+            
 
             tg.showPopup({
 
                 title: "👥 Пригласить друзей",
 
-                message: "Приглашайте друзей и получайте бонусы!\n\nВаша реферальная ссылка: https://t.me/CastleOnTON_bot?start=ref_12345\n\nЗа каждого друга вы получаете 1% от его добычи!",
+                message: `Ваша реферальная ссылка:\n${referralLink}\n\nЗа каждого друга вы получаете 1% от его добычи!`,
 
-                buttons: [{ type: "ok" }]
+                buttons: [{
 
-            });
+                    type: 'default',
 
-        }
+                    text: 'Копировать ссылку',
 
-        
+                    id: 'copy'
 
-        // Улучшение зданий
+                }, {
 
-        function upgradeBuilding() {
+                    type: 'cancel'
 
-            tg.showPopup({
+                }]
 
-                title: "⚡ Улучшение зданий",
+            }, function(buttonId) {
 
-                message: "Выберите здание для улучшения:",
+                if (buttonId === 'copy') {
 
-                buttons: [
+                    navigator.clipboard.writeText(referralLink).then(() => {
 
-                    { id: "upg_castle", type: "default", text: "🏰 Замок (300 золота)" },
+                        tg.showAlert("Ссылка скопирована в буфер обмена!");
 
-                    { id: "upg_farm", type: "default", text: "🌾 Ферма (150 золота)" },
+                    });
 
-                    { id: "upg_sawmill", type: "default", text: "🪵 Лесопилка (200 золота)" },
-
-                    { id: "upg_mine", type: "default", text: "⛏️ Шахта (250 золота)" },
-
-                    { type: "cancel" }
-
-                ]
+                }
 
             });
 
@@ -898,15 +836,87 @@
 
         
 
-        // Показать статистику
+        function showUpgradeMenu() {
+
+            document.getElementById('upgradeMenu').style.display = 'block';
+
+            document.getElementById('overlay').style.display = 'block';
+
+            
+
+            // Заполняем опции улучшений
+
+            const upgradeOptions = document.getElementById('upgrade-options');
+
+            upgradeOptions.innerHTML = `
+
+                <div class="upgrade-option">
+
+                    <div>🏰 Замок</div>
+
+                    <div>Уровень ${userData.castle_level}</div>
+
+                    <button onclick="upgradeBuilding('castle')">Улучшить (100 💎)</button>
+
+                </div>
+
+                <div class="upgrade-option">
+
+                    <div>🌾 Ферма</div>
+
+                    <div>Уровень ${userData.farm_level}</div>
+
+                    <button onclick="upgradeBuilding('farm')">Улучшить (80 💎)</button>
+
+                </div>
+
+                <div class="upgrade-option">
+
+                    <div>🪵 Лесопилка</div>
+
+                    <div>Уровень ${userData.sawmill_level}</div>
+
+                    <button onclick="upgradeBuilding('sawmill')">Улучшить (90 💎)</button>
+
+                </div>
+
+                <div class="upgrade-option">
+
+                    <div>⛏️ Шахта</div>
+
+                    <div>Уровень ${userData.mine_level}</div>
+
+                    <button onclick="upgradeBuilding('mine')">Улучшить (70 💎)</button>
+
+                </div>
+
+            `;
+
+        }
+
+        
+
+        function hideMenus() {
+
+            document.getElementById('upgradeMenu').style.display = 'none';
+
+            document.getElementById('overlay').style.display = 'none';
+
+        }
+
+        
 
         function showStats() {
+
+            if (!userData) return;
+
+            
 
             tg.showPopup({
 
                 title: "📊 Статистика игрока",
 
-                message: `👑 Уровень: 3\n🏰 Замок: Ур. ${buildings.castle.level}\n🌾 Ферма: Ур. ${buildings.farm.level}\n🪵 Лесопилка: Ур. ${buildings.sawmill.level}\n⛏️ Шахта: Ur. ${buildings.mine.level}\n\n⭐ Общий доход: 21/час`,
+                message: `💎 Алмазы: ${userData.gems}\n🌾 Еда: ${userData.food}\n🪵 Дерево: ${userData.wood}\n⛰️ Камень: ${userData.stone}\n\n🏰 Замок: Ур. ${userData.castle_level}\n🌾 Ферма: Ур. ${userData.farm_level}\n🪵 Лесопилка: Ур. ${userData.sawmill_level}\n⛏️ Шахта: Ур. ${userData.mine_level}`,
 
                 buttons: [{ type: "ok" }]
 
@@ -916,7 +926,65 @@
 
         
 
-        // Запускаем игру при загрузке
+        // Обработчик сообщений от бота
+
+        tg.onEvent('message', (message) => {
+
+            try {
+
+                const data = JSON.parse(message);
+
+                if (data.type === 'user_data') {
+
+                    userData = data.data;
+
+                    updateResourcesDisplay();
+
+                    updateTimer();
+
+                }
+
+            } catch (error) {
+
+                console.error("Error parsing message:", error);
+
+            }
+
+        });
+
+        
+
+        function updateResourcesDisplay() {
+
+            if (!userData) return;
+
+            
+
+            document.getElementById('gems-count').textContent = userData.gems.toFixed(1);
+
+            document.getElementById('food-count').textContent = userData.food;
+
+            document.getElementById('wood-count').textContent = userData.wood;
+
+            document.getElementById('stone-count').textContent = userData.stone;
+
+            document.getElementById('referrals-count').textContent = userData.referrals_count;
+
+            
+
+            // Обновляем уровни зданий
+
+            document.querySelector('[data-type="castle"] .building-level').textContent = `Уровень ${userData.castle_level}`;
+
+            document.querySelector('[data-type="farm"] .building-level').textContent = `Уровень ${userData.farm_level}`;
+
+            document.querySelector('[data-type="sawmill"] .building-level').textContent = `Уровень ${userData.sawmill_level}`;
+
+            document.querySelector('[data-type="mine"] .building-level').textContent = `Уровень ${userData.mine_level}`;
+
+        }
+
+        
 
         document.addEventListener('DOMContentLoaded', initGame);
 
