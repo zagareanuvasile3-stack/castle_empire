@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Castle Empire</title>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+
+        * {
+
+            box-sizing: border-box;
+
+            margin: 0;
+
+            padding: 0;
+
+            -webkit-tap-highlight-color: transparent;
+
+        }
+
+        
+
+        body {
+
+            background: linear-gradient(135deg, #0b2b40 0%, #093145 100%);
+
+            color: white;
+
+            font-family: 'Segoe UI', Roboto, sans-serif;
+
+            padding: 15px;
+
+            min-height: 100vh;
+
+        }
+
+        
+
+        .container {
+
+            max-width: 100%;
+
+            margin: 0 auto;
+
+        }
+
+        
+
+        /* ШАПКА */
+
+        .header {
+
+            text-align: center;
+
+            margin-bottom: 20px;
+
+            padding: 15px;
+
+            background: rgba(25, 55, 75, 0.6);
+
+            border-radius: 16px;
+
+            border: 1px solid rgba(42, 150, 165, 0.3);
+
+        }
+
+        
+
+        .game-title {
+
+            font-size: 24px;
+
+            font-weight: bold;
+
+            color: #ff9d00;
+
+            margin-bottom: 5px;
+
+        }
+
+        
+
+        /* РЕСУРСЫ */
+
+        .resources-grid {
+
+            display: grid;
+
+            grid-template-columns: repeat(2, 1fr);
+
+            gap: 10px;
+
+            margin-bottom: 20px;
+
+        }
+
+        
+
+        .resource-card {
+
+            background: linear-gradient(135deg, #15616b 0%, #093145 100%);
+
+            padding: 12px;
+
+            border-radius: 12px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+
+        }
+
+        
+
+        .resource-icon {
+
+            width: 35px;
+
+            height: 35px;
+
+            border-radius: 50%;
+
+            background: linear-gradient(135deg, #ff9d00 0%, #ff7800 100%);
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 18px;
+
+        }
+
+        
+
+        .resource-info {
+
+            flex: 1;
+
+        }
+
+        
+
+        .resource-name {
+
+            font-size: 12px;
+
+            opacity: 0.8;
+
+        }
+
+        
+
+        .resource-amount {
+
+            font-weight: bold;
+
+            font-size: 16px;
+
+        }
+
+        
+
+        /* ЗДАНИЯ */
+
+        .buildings-grid {
+
+            display: grid;
+
+            grid-template-columns: repeat(2, 1fr);
+
+            gap: 15px;
+
+            margin-bottom: 20px;
+
+        }
+
+        
+
+        .building-card {
+
+            background: linear-gradient(135deg, #1e5f75 0%, #164b60 100%);
+
+            border-radius: 14px;
+
+            padding: 18px 12px;
+
+            text-align: center;
+
+            border: 2px solid rgba(42, 150, 165, 0.3);
+
+        }
+
+        
+
+        .building-icon {
+
+            font-size: 36px;
+
+            margin-bottom: 8px;
+
+            display: block;
+
+        }
+
+        
+
+        .building-name {
+
+            font-weight: bold;
+
+            font-size: 15px;
+
+            margin-bottom: 5px;
+
+        }
+
+        
+
+        .building-level {
+
+            background: rgba(0,0,0,0.3);
+
+            padding: 3px 10px;
+
+            border-radius: 15px;
+
+            font-size: 12px;
+
+            display: inline-block;
+
+            margin-bottom: 5px;
+
+        }
+
+        
+
+        .building-production {
+
+            font-size: 11px;
+
+            opacity: 0.8;
+
+        }
+
+        
+
+        /* ТАЙМЕР */
+
+        .timer-status {
+
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+
+            color: white;
+
+            padding: 12px;
+
+            border-radius: 12px;
+
+            text-align: center;
+
+            margin-bottom: 10px;
+
+            font-weight: bold;
+
+        }
+
+        
+
+        .timer-status.ready {
+
+            background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+
+        }
+
+        
+
+        .collection-info {
+
+            font-size: 12px;
+
+            opacity: 0.8;
+
+            text-align: center;
+
+            margin-bottom: 15px;
+
+        }
+
+        
+
+        /* КНОПКИ ДЕЙСТВИЙ */
+
+        .actions-bar {
+
+            display: grid;
+
+            grid-template-columns: repeat(2, 1fr);
+
+            gap: 10px;
+
+            margin-bottom: 15px;
+
+        }
+
+        
+
+        .action-btn {
+
+            background: linear-gradient(135deg, #ff9d00 0%, #ff7800 100%);
+
+            color: #093145;
+
+            border: none;
+
+            padding: 14px 10px;
+
+            border-radius: 12px;
+
+            font-weight: bold;
+
+            font-size: 14px;
+
+            cursor: pointer;
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            gap: 4px;
+
+            box-shadow: 0 3px 8px rgba(255, 157, 0, 0.3);
+
+        }
+
+        
+
+        .action-btn:disabled {
+
+            opacity: 0.6;
+
+            cursor: not-allowed;
+
+        }
+
+        
+
+        .action-btn:active:not(:disabled) {
+
+            transform: scale(0.97);
+
+        }
+
+        
+
+        .btn-icon {
+
+            font-size: 20px;
+
+        }
+
+        
+
+        /* СТАТУС БАР */
+
+        .status-bar {
+
+            background: rgba(25, 55, 75, 0.7);
+
+            padding: 10px;
+
+            border-radius: 10px;
+
+            text-align: center;
+
+            font-size: 13px;
+
+            margin-top: 10px;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- ШАПКА -->
+
+        <div class="header">
+
+            <div class="game-title">🏰 Castle Empire</div>
+
+            <div>Развивайте свое королевство!</div>
+
+        </div>
+
+        
+
+        <!-- РЕСУРСЫ -->
+
+        <div class="resources-grid">
+
+            <div class="resource-card">
+
+                <div class="resource-icon">💎</div>
+
+                <div class="resource-info">
+
+                    <div class="resource-name">АЛМАЗЫ</div>
+
+                    <div class="resource-amount" id="gems-count">5.0</div>
+
+                </div>
+
+            </div>
+
+            
+
+            <div class="resource-card">
+
+                <div class="resource-icon">🌾</div>
+
+                <div class="resource-info">
+
+                    <div class="resource-name">ЕДА</div>
+
+                    <div class="resource-amount" id="food-count">120</div>
+
+                </div>
+
+            </div>
+
+            
+
+            <div class="resource-card">
+
+                <div class="resource-icon">🪵</div>
+
+                <div class="resource-info">
+
+                    <div class="resource-name">ДЕРЕВО</div>
+
+                    <div class="resource-amount" id="wood-count">80</div>
+
+                </div>
+
+            </div>
+
+            
+
+            <div class="resource-card">
+
+                <div class="resource-icon">⛰️</div>
+
+                <div class="resource-info">
+
+                    <div class="resource-name">КАМЕНЬ</div>
+
+                    <div class="resource-amount" id="stone-count">60</div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        
+
+        <!-- ЗДАНИЯ -->
+
+        <div class="buildings-grid">
+
+            <div class="building-card" data-type="castle">
+
+                <span class="building-icon">🏰</span>
+
+                <div class="building-name">ЗАМОК</div>
+
+                <div class="building-level">Уровень 1</div>
+
+                <div class="building-production">+0.1 алмазов/час</div>
+
+            </div>
+
+            
+
+            <div class="building-card" data-type="farm">
+
+                <span class="building-icon">🌾</span>
+
+                <div class="building-name">ФЕРМА</div>
+
+                <div class="building-level">Уровень 1</div>
+
+                <div class="building-production">+5 еды/час</div>
+
+            </div>
+
+            
+
+            <div class="building-card" data-type="sawmill">
+
+                <span class="building-icon">🪵</span>
+
+                <div class="building-name">ЛЕСОПИЛКА</div>
+
+                <div class="building-level">Уровень 1</div>
+
+                <div class="building-production">+3 дерева/час</div>
+
+            </div>
+
+            
+
+            <div class="building-card" data-type="mine">
+
+                <span class="building-icon">⛏️</span>
+
+                <div class="building-name">ШАХТА</div>
+
+                <div class="building-level">Уровень 1</div>
+
+                <div class="building-production">+2 камня/час</div>
+
+            </div>
+
+        </div>
+
+        
+
+        <!-- ТАЙМЕР -->
+
+        <div class="timer-status" id="timerStatus">
+
+            ⏳ До сбора: <span id="timer">12:00:00</span>
+
+        </div>
+
+        
+
+        <div class="collection-info">
+
+            💡 Можно собирать ресурсы каждые 12 часов
+
+        </div>
+
+        
+
+        <!-- КНОПКИ ДЕЙСТВИЙ -->
+
+        <div class="actions-bar">
+
+            <button class="action-btn" id="collectBtn" onclick="collectResources()">
+
+                <span class="btn-icon">🎁</span>
+
+                <span>СОБРАТЬ</span>
+
+            </button>
+
+            
+
+            <button class="action-btn" onclick="inviteFriends()">
+
+                <span class="btn-icon">👥</span>
+
+                <span>ПРИГЛАСИТЬ</span>
+
+            </button>
+
+            
+
+            <button class="action-btn" onclick="upgradeBuilding()">
+
+                <span class="btn-icon">⚡</span>
+
+                <span>УЛУЧШИТЬ</span>
+
+            </button>
+
+            
+
+            <button class="action-btn" onclick="showStats()">
+
+                <span class="btn-icon">📊</span>
+
+                <span>СТАТИСТИКА</span>
+
+            </button>
+
+        </div>
+
+        
+
+        <!-- СТАТУС БАР -->
+
+        <div class="status-bar">
+
+            👑 Игрок: <span id="player-name">Балтий</span> | 👥 Рефералов: <span id="referrals-count">0</span>
+
+        </div>
+
+    </div>
+
+
+
+    <script>
+
+        // Инициализация Telegram WebApp
+
+        const tg = window.Telegram.WebApp;
+
+        
+
+        // Настройки игры
+
+        const COLLECTION_COOLDOWN = 12 * 60 * 60 * 1000; // 12 часов
+
+        let lastCollectionTime = Date.now() - 6 * 60 * 60 * 1000; // 6 часов назад
+
+        let resources = {
+
+            gems: 5.0,
+
+            food: 120,
+
+            wood: 80,
+
+            stone: 60
+
+        };
+
+        
+
+        let buildings = {
+
+            castle: { level: 1, production: 0.1 },
+
+            farm: { level: 1, production: 5 },
+
+            sawmill: { level: 1, production: 3 },
+
+            mine: { level: 1, production: 2 }
+
+        };
+
+        
+
+        // Основная функция инициализации
+
+        function initGame() {
+
+            tg.expand();
+
+            tg.MainButton.setText("ЗАКРЫТЬ");
+
+            tg.MainButton.show();
+
+            tg.MainButton.onClick(() => tg.close());
+
+            
+
+            // Загружаем данные пользователя
+
+            loadUserData();
+
+            
+
+            // Запускаем таймер
+
+            setInterval(updateTimer, 1000);
+
+            updateTimer();
+
+            
+
+            // Обновляем отображение ресурсов
+
+            updateResourcesDisplay();
+
+        }
+
+        
+
+        // Загрузка данных пользователя (заглушка)
+
+        function loadUserData() {
+
+            // Здесь будет загрузка реальных данных из бота
+
+            console.log("Загрузка данных пользователя...");
+
+        }
+
+        
+
+        // Обновление отображения ресурсов
+
+        function updateResourcesDisplay() {
+
+            document.getElementById('gems-count').textContent = resources.gems.toFixed(1);
+
+            document.getElementById('food-count').textContent = resources.food;
+
+            document.getElementById('wood-count').textContent = resources.wood;
+
+            document.getElementById('stone-count').textContent = resources.stone;
+
+        }
+
+        
+
+        // Обновление таймера
+
+        function updateTimer() {
+
+            const now = Date.now();
+
+            const timeLeft = COLLECTION_COOLDOWN - (now - lastCollectionTime);
+
+            const timerElement = document.getElementById('timer');
+
+            const timerStatus = document.getElementById('timerStatus');
+
+            const collectBtn = document.getElementById('collectBtn');
+
+            
+
+            if (timeLeft <= 0) {
+
+                // Можно собирать!
+
+                timerElement.textContent = "00:00:00";
+
+                timerStatus.innerHTML = "✅ Ресурсы готовы к сбору!";
+
+                timerStatus.className = "timer-status ready";
+
+                collectBtn.disabled = false;
+
+            } else {
+
+                // Обновляем таймер
+
+                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+
+                const seconds = Math.floor((timeLeft % (60000)) / 1000);
+
+                
+
+                timerElement.textContent = 
+
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+                
+
+                timerStatus.innerHTML = `⏳ До сбора: <span id="timer">${timerElement.textContent}</span>`;
+
+                timerStatus.className = "timer-status";
+
+                collectBtn.disabled = true;
+
+            }
+
+        }
+
+        
+
+        // Сбор ресурсов
+
+        function collectResources() {
+
+            const now = Date.now();
+
+            if (now - lastCollectionTime < COLLECTION_COOLDOWN) {
+
+                tg.showAlert("❌ Еще не время для сбора!");
+
+                return;
+
+            }
+
+            
+
+            // Отправляем команду боту на сбор
+
+            tg.sendData(JSON.stringify({
+
+                action: 'collect_resources',
+
+                user_id: tg.initDataUnsafe.user.id,
+
+                timestamp: now
+
+            }));
+
+            
+
+            // Временно обновляем интерфейс
+
+            resources.gems += buildings.castle.production * 12;
+
+            resources.food += buildings.farm.production * 12;
+
+            resources.wood += buildings.sawmill.production * 12;
+
+            resources.stone += buildings.mine.production * 12;
+
+            
+
+            lastCollectionTime = now;
+
+            updateResourcesDisplay();
+
+            updateTimer();
+
+            
+
+            tg.showPopup({
+
+                title: "🎁 Ресурсы собраны!",
+
+                message: `За 12 часов получено:\n+${(buildings.castle.production * 12).toFixed(1)} 💎\n+${buildings.farm.production * 12} 🌾\n+${buildings.sawmill.production * 12} 🪵\n+${buildings.mine.production * 12} ⛰️`,
+
+                buttons: [{ type: "ok" }]
+
+            });
+
+        }
+
+        
+
+        // Приглашение друзей
+
+        function inviteFriends() {
+
+            tg.showPopup({
+
+                title: "👥 Пригласить друзей",
+
+                message: "Приглашайте друзей и получайте бонусы!\n\nВаша реферальная ссылка: https://t.me/CastleOnTON_bot?start=ref_12345\n\nЗа каждого друга вы получаете 1% от его добычи!",
+
+                buttons: [{ type: "ok" }]
+
+            });
+
+        }
+
+        
+
+        // Улучшение зданий
+
+        function upgradeBuilding() {
+
+            tg.showPopup({
+
+                title: "⚡ Улучшение зданий",
+
+                message: "Выберите здание для улучшения:",
+
+                buttons: [
+
+                    { id: "upg_castle", type: "default", text: "🏰 Замок (300 золота)" },
+
+                    { id: "upg_farm", type: "default", text: "🌾 Ферма (150 золота)" },
+
+                    { id: "upg_sawmill", type: "default", text: "🪵 Лесопилка (200 золота)" },
+
+                    { id: "upg_mine", type: "default", text: "⛏️ Шахта (250 золота)" },
+
+                    { type: "cancel" }
+
+                ]
+
+            });
+
+        }
+
+        
+
+        // Показать статистику
+
+        function showStats() {
+
+            tg.showPopup({
+
+                title: "📊 Статистика игрока",
+
+                message: `👑 Уровень: 3\n🏰 Замок: Ур. ${buildings.castle.level}\n🌾 Ферма: Ур. ${buildings.farm.level}\n🪵 Лесопилка: Ур. ${buildings.sawmill.level}\n⛏️ Шахта: Ur. ${buildings.mine.level}\n\n⭐ Общий доход: 21/час`,
+
+                buttons: [{ type: "ok" }]
+
+            });
+
+        }
+
+        
+
+        // Запускаем игру при загрузке
+
+        document.addEventListener('DOMContentLoaded', initGame);
+
+    </script>
+
+</body>
+
+</html>
