@@ -1,241 +1,570 @@
-<script>
-    const tg = window.Telegram.WebApp;
-    let userData = null;
-
-    function initGame() {
-        tg.expand();
-        tg.MainButton.setText("ЗАКРЫТЬ");
-        tg.MainButton.show();
-        tg.MainButton.onClick(() => tg.close());
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Castle Empire</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
         
-        // Загружаем данные игрока при старте
-        setTimeout(loadUserData, 1000);
-        setInterval(updateTimer, 1000);
+        body {
+            background: linear-gradient(135deg, #0b2b40 0%, #093145 100%);
+            color: white;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            padding: 15px;
+            min-height: 100vh;
+        }
         
-        // Показываем тестовую информацию
-        console.log("🟢 WebApp запущен!");
-        console.log("User ID:", tg.initDataUnsafe.user?.id);
-    }
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(25, 55, 75, 0.6);
+            border-radius: 16px;
+            border: 1px solid rgba(42, 150, 165, 0.3);
+        }
+        
+        .game-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff9d00;
+            margin-bottom: 5px;
+        }
+        
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .resource-card {
+            background: linear-gradient(135deg, #15616b 0%, #093145 100%);
+            padding: 12px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+        
+        .resource-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff9d00 0%, #ff7800 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .resource-info {
+            flex: 1;
+        }
+        
+        .resource-name {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .resource-amount {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .buildings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .building-card {
+            background: linear-gradient(135deg, #1e5f75 0%, #164b60 100%);
+            border-radius: 14px;
+            padding: 18px 12px;
+            text-align: center;
+            border: 2px solid rgba(42, 150, 165, 0.3);
+        }
+        
+        .building-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .building-name {
+            font-weight: bold;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+        
+        .building-level {
+            background: rgba(0,0,0,0.3);
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+        
+        .building-production {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+        
+        .timer-status {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .timer-status.ready {
+            background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+        }
+        
+        .collection-info {
+            font-size: 12px;
+            opacity: 0.8;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .actions-bar {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .action-btn {
+            background: linear-gradient(135deg, #ff9d00 0%, #ff7800 100%);
+            color: #093145;
+            border: none;
+            padding: 14px 10px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 3px 8px rgba(255, 157, 0, 0.3);
+        }
+        
+        .action-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .action-btn:active:not(:disabled) {
+            transform: scale(0.97);
+        }
+        
+        .btn-icon {
+            font-size: 20px;
+        }
+        
+        .status-bar {
+            background: rgba(25, 55, 75, 0.7);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+        
+        .upgrade-menu {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1e5f75 0%, #164b60 100%);
+            padding: 20px;
+            border-radius: 16px;
+            z-index: 1000;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 999;
+        }
 
-    function loadUserData() {
-        try {
-            // Отправляем запрос на получение данных
-            const requestData = {
-                action: 'get_user_data',
-                user_id: tg.initDataUnsafe.user?.id
+        .upgrade-option {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="game-title">🏰 Castle Empire</div>
+            <div>Развивайте свое королевство!</div>
+        </div>
+        
+        <div class="resources-grid">
+            <div class="resource-card">
+                <div class="resource-icon">💎</div>
+                <div class="resource-info">
+                    <div class="resource-name">АЛМАЗЫ</div>
+                    <div class="resource-amount" id="gems-count">0</div>
+                </div>
+            </div>
+            
+            <div class="resource-card">
+                <div class="resource-icon">🌾</div>
+                <div class="resource-info">
+                    <div class="resource-name">ЕДА</div>
+                    <div class="resource-amount" id="food-count">0</div>
+                </div>
+            </div>
+            
+            <div class="resource-card">
+                <div class="resource-icon">🪵</div>
+                <div class="resource-info">
+                    <div class="resource-name">ДЕРЕВО</div>
+                    <div class="resource-amount" id="wood-count">0</div>
+                </div>
+            </div>
+            
+            <div class="resource-card">
+                <div class="resource-icon">⛰️</div>
+                <div class="resource-info">
+                    <div class="resource-name">КАМЕНЬ</div>
+                    <div class="resource-amount" id="stone-count">0</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="buildings-grid">
+            <div class="building-card" data-type="castle">
+                <span class="building-icon">🏰</span>
+                <div class="building-name">ЗАМОК</div>
+                <div class="building-level">Уровень 1</div>
+                <div class="building-production">+0.1 алмазов/час</div>
+            </div>
+            
+            <div class="building-card" data-type="farm">
+                <span class="building-icon">🌾</span>
+                <div class="building-name">ФЕРМА</div>
+                <div class="building-level">Уровень 1</div>
+                <div class="building-production">+5 еды/час</div>
+            </div>
+            
+            <div class="building-card" data-type="sawmill">
+                <span class="building-icon">🪵</span>
+                <div class="building-name">ЛЕСОПИЛКА</div>
+                <div class="building-level">Уровень 1</div>
+                <div class="building-production">+3 дерева/час</div>
+            </div>
+            
+            <div class="building-card" data-type="mine">
+                <span class="building-icon">⛏️</span>
+                <div class="building-name">ШАХТА</div>
+                <div class="building-level">Уровень 1</div>
+                <div class="building-production">+2 камня/час</div>
+            </div>
+        </div>
+        
+        <div class="timer-status" id="timerStatus">
+            ⏳ Загрузка данных...
+        </div>
+        
+        <div class="collection-info">
+            💡 Можно собирать ресурсы каждые 12 часов
+        </div>
+        
+        <div class="actions-bar">
+            <button class="action-btn" id="collectBtn" onclick="collectResources()">
+                <span class="btn-icon">🎁</span>
+                <span>СОБРАТЬ</span>
+            </button>
+            
+            <button class="action-btn" onclick="showReferralPopup()">
+                <span class="btn-icon">👥</span>
+                <span>ПРИГЛАСИТЬ</span>
+            </button>
+            
+            <button class="action-btn" onclick="showUpgradeMenu()">
+                <span class="btn-icon">⚡</span>
+                <span>УЛУЧШИТЬ</span>
+            </button>
+            
+            <button class="action-btn" onclick="showStats()">
+                <span class="btn-icon">📊</span>
+                <span>СТАТИСТИКА</span>
+            </button>
+        </div>
+        
+        <div class="status-bar">
+            👑 Игрок: <span id="player-name">Загрузка...</span> | 👥 Рефералов: <span id="referrals-count">0</span>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="hideMenus()"></div>
+    
+    <div class="upgrade-menu" id="upgradeMenu">
+        <h3>⚡ Улучшение зданий</h3>
+        <div id="upgrade-options"></div>
+        <button onclick="hideMenus()" style="margin-top: 15px; padding: 10px; width: 100%; background: #ff9d00; color: #093145; border: none; border-radius: 8px; font-weight: bold;">Закрыть</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        let userData = null;
+
+        function initGame() {
+            console.log("🟢 WebApp Castle Empire запущен!");
+            
+            // Расширяем на весь экран
+            tg.expand();
+            
+            // Настраиваем основную кнопку
+            tg.MainButton.setText("ЗАКРЫТЬ ИГРУ");
+            tg.MainButton.show();
+            tg.MainButton.onClick(() => tg.close());
+            
+            // Показываем тестовые данные сразу
+            showLoadingData();
+            
+            // Пытаемся загрузить реальные данные
+            setTimeout(loadUserData, 1500);
+            
+            // Запускаем таймер
+            setInterval(updateTimer, 1000);
+            
+            // Логируем информацию о пользователе
+            if (tg.initDataUnsafe.user) {
+                console.log("👤 User ID:", tg.initDataUnsafe.user.id);
+                console.log("👤 Username:", tg.initDataUnsafe.user.username);
+                document.getElementById('player-name').textContent = tg.initDataUnsafe.user.first_name || 'Игрок';
+            }
+        }
+
+        function showLoadingData() {
+            console.log("🔄 Показываем тестовые данные...");
+            
+            userData = {
+                gems: 5.0,
+                food: 120,
+                wood: 80,
+                stone: 60,
+                last_collection: Date.now() - 8 * 60 * 60 * 1000, // 8 часов назад
+                castle_level: 1,
+                farm_level: 1,
+                sawmill_level: 1,
+                mine_level: 1,
+                referrals_count: 2
             };
             
-            console.log("📨 Отправляю запрос данных:", requestData);
-            tg.sendData(JSON.stringify(requestData));
-            
-        } catch (error) {
-            console.error("❌ Ошибка загрузки данных:", error);
-            // Заглушка для теста
-            setTestData();
+            updateResourcesDisplay();
+            updateTimer();
         }
-    }
 
-    function setTestData() {
-        userData = {
-            gems: 5.0,
-            food: 120,
-            wood: 80,
-            stone: 60,
-            last_collection: Date.now() - 10 * 60 * 60 * 1000, // 10 часов назад
-            castle_level: 1,
-            farm_level: 1,
-            sawmill_level: 1,
-            mine_level: 1,
-            referrals_count: 0
-        };
-        updateResourcesDisplay();
-        updateTimer();
-    }
-
-    function updateTimer() {
-        if (!userData || !userData.last_collection) return;
-        
-        const now = Date.now();
-        const timePassed = now - userData.last_collection;
-        const timeLeft = 12 * 60 * 60 * 1000 - timePassed;
-        
-        const timerElement = document.getElementById('timer');
-        const timerStatus = document.getElementById('timerStatus');
-        const collectBtn = document.getElementById('collectBtn');
-        
-        if (timeLeft <= 0) {
-            timerElement.textContent = "00:00:00";
-            timerStatus.innerHTML = "✅ Ресурсы готовы к сбору!";
-            timerStatus.className = "timer-status ready";
-            collectBtn.disabled = false;
-        } else {
-            const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((timeLeft % (60000)) / 1000);
-            
-            timerElement.textContent = 
-                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            timerStatus.innerHTML = `⏳ До сбора: <span id="timer">${timerElement.textContent}</span>`;
-            timerStatus.className = "timer-status";
-            collectBtn.disabled = true;
+        function loadUserData() {
+            try {
+                console.log("📨 Запрашиваем данные у бота...");
+                
+                const requestData = {
+                    action: 'get_user_data',
+                    user_id: tg.initDataUnsafe.user?.id,
+                    timestamp: Date.now()
+                };
+                
+                tg.sendData(JSON.stringify(requestData));
+                
+            } catch (error) {
+                console.error("❌ Ошибка загрузки данных:", error);
+                tg.showAlert("Не удалось загрузить данные. Используем тестовые значения.");
+            }
         }
-    }
 
-    function collectResources() {
-        try {
-            const collectData = {
-                action: 'collect_resources',
+        function updateTimer() {
+            if (!userData || !userData.last_collection) {
+                document.getElementById('timerStatus').textContent = "⏳ Загрузка таймера...";
+                return;
+            }
+            
+            const now = Date.now();
+            const timePassed = now - userData.last_collection;
+            const timeLeft = 12 * 60 * 60 * 1000 - timePassed;
+            
+            const timerElement = document.getElementById('timerStatus');
+            const collectBtn = document.getElementById('collectBtn');
+            
+            if (timeLeft <= 0) {
+                timerElement.innerHTML = "✅ <strong>Ресурсы готовы к сбору!</strong>";
+                timerElement.className = "timer-status ready";
+                collectBtn.disabled = false;
+            } else {
+                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeLeft % (60000)) / 1000);
+                
+                const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                timerElement.innerHTML = `⏳ До сбора: <strong>${timeString}</strong>`;
+                timerElement.className = "timer-status";
+                collectBtn.disabled = true;
+            }
+        }
+
+        function collectResources() {
+            try {
+                console.log("🎁 Отправляем запрос на сбор ресурсов...");
+                
+                const collectData = {
+                    action: 'collect_resources',
+                    user_id: tg.initDataUnsafe.user?.id,
+                    timestamp: Date.now()
+                };
+                
+                tg.sendData(JSON.stringify(collectData));
+                
+                // Показываем уведомление
+                tg.showPopup({
+                    title: "✅ Запрос отправлен",
+                    message: "Запрос на сбор ресурсов отправлен боту!",
+                    buttons: [{ type: "ok" }]
+                });
+                
+            } catch (error) {
+                console.error("❌ Ошибка при сборе ресурсов:", error);
+                tg.showAlert("Ошибка при отправке запроса. Попробуйте позже.");
+            }
+        }
+
+        function showReferralPopup() {
+            const userId = tg.initDataUnsafe.user?.id;
+            const referralLink = `https://t.me/CastleEmpireBot?start=ref_${userId}`;
+            
+            tg.showPopup({
+                title: "👥 Пригласить друзей",
+                message: `Приглашайте друзей и получайте бонусы!\n\n🔗 Ваша ссылка:\n<code>${referralLink}</code>\n\nЗа каждого друга вы получаете 1% от его добычи!`,
+                buttons: [{
+                    type: 'default',
+                    text: '📋 Копировать ссылку',
+                    id: 'copy'
+                }, {
+                    type: 'cancel',
+                    text: 'Закрыть'
+                }]
+            }, function(buttonId) {
+                if (buttonId === 'copy') {
+                    navigator.clipboard.writeText(referralLink).then(() => {
+                        tg.showAlert("✅ Ссылка скопирована в буфер обмена!");
+                    }).catch(() => {
+                        tg.showAlert("❌ Не удалось скопировать ссылку");
+                    });
+                }
+            });
+        }
+
+        function showUpgradeMenu() {
+            if (!userData) {
+                tg.showAlert("Данные еще не загружены. Подождите немного.");
+                return;
+            }
+            
+            document.getElementById('upgradeMenu').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+            
+            const upgradeOptions = document.getElementById('upgrade-options');
+            upgradeOptions.innerHTML = `
+                <div class="upgrade-option">
+                    <div><strong>🏰 Замок</strong></div>
+                    <div>Уровень ${userData.castle_level || 1}</div>
+                    <button onclick="upgradeBuilding('castle')" style="margin-top: 5px; padding: 8px 12px; background: #ff9d00; color: #093145; border: none; border-radius: 6px; font-weight: bold; width: 100%;">Улучшить (100 💎)</button>
+                </div>
+                <div class="upgrade-option">
+                    <div><strong>🌾 Ферма</strong></div>
+                    <div>Уровень ${userData.farm_level || 1}</div>
+                    <button onclick="upgradeBuilding('farm')" style="margin-top: 5px; padding: 8px 12px; background: #ff9d00; color: #093145; border: none; border-radius: 6px; font-weight: bold; width: 100%;">Улучшить (80 💎)</button>
+                </div>
+                <div class="upgrade-option">
+                    <div><strong>🪵 Лесопилка</strong></div>
+                    <div>Уровень ${userData.sawmill_level || 1}</div>
+                    <button onclick="upgradeBuilding('sawmill')" style="margin-top: 5px; padding: 8px 12px; background: #ff9d00; color: #093145; border: none; border-radius: 6px; font-weight: bold; width: 100%;">Улучшить (90 💎)</button>
+                </div>
+                <div class="upgrade-option">
+                    <div><strong>⛏️ Шахта</strong></div>
+                    <div>Уровень ${userData.mine_level || 1}</div>
+                    <button onclick="upgradeBuilding('mine')" style="margin-top: 5px; padding: 8px 12px; background: #ff9d00; color: #093145; border: none; border-radius: 6px; font-weight: bold; width: 100%;">Улучшить (70 💎)</button>
+                </div>
+            `;
+        }
+
+        function upgradeBuilding(buildingType) {
+            console.log("⚡ Запрос на улучшение:", buildingType);
+            
+            const upgradeData = {
+                action: 'upgrade_building',
+                building: buildingType,
                 user_id: tg.initDataUnsafe.user?.id,
                 timestamp: Date.now()
             };
             
-            console.log("🎁 Отправляю запрос на сбор:", collectData);
-            tg.sendData(JSON.stringify(collectData));
+            tg.sendData(JSON.stringify(upgradeData));
             
-            // Показываем уведомление
-            tg.showPopup({
-                title: "✅ Сбор ресурсов",
-                message: "Запрос на сбор ресурсов отправлен!",
-                buttons: [{ type: "ok" }]
-            });
-            
-        } catch (error) {
-            console.error("❌ Ошибка сбора ресурсов:", error);
-            tg.showAlert("Ошибка при сборе ресурсов. Попробуйте позже.");
+            tg.showAlert(`🏗️ Запрос на улучшение ${buildingType} отправлен!`);
+            hideMenus();
         }
-    }
 
-    function showReferralPopup() {
-        const referralLink = `https://t.me/${tg.initDataUnsafe.user?.username || 'CastleEmpireBot'}?start=ref_${tg.initDataUnsafe.user?.id}`;
-        
-        tg.showPopup({
-            title: "👥 Пригласить друзей",
-            message: `Ваша реферальная ссылка:\n${referralLink}\n\nЗа каждого друга вы получаете 1% от его добычи!`,
-            buttons: [{
-                type: 'default',
-                text: 'Копировать ссылку',
-                id: 'copy'
-            }, {
-                type: 'cancel'
-            }]
-        }, function(buttonId) {
-            if (buttonId === 'copy') {
-                navigator.clipboard.writeText(referralLink).then(() => {
-                    tg.showAlert("Ссылка скопирована в буфер обмена!");
-                });
+        function hideMenus() {
+            document.getElementById('upgradeMenu').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        function showStats() {
+            if (!userData) {
+                tg.showAlert("Данные еще не загружены.");
+                return;
             }
-        });
-    }
+            
+            const statsMessage = `
+📊 <b>Статистика игрока</b>
 
-    function showUpgradeMenu() {
-        document.getElementById('upgradeMenu').style.display = 'block';
-        document.getElementById('overlay').style.display = 'block';
-        
-        if (!userData) return;
-        
-        const upgradeOptions = document.getElementById('upgrade-options');
-        upgradeOptions.innerHTML = `
-            <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
-                <div><strong>🏰 Замок</strong></div>
-                <div>Уровень ${userData.castle_level || 1}</div>
-                <button onclick="upgradeBuilding('castle')" style="margin-top: 5px; padding: 5px 10px;">Улучшить (100 💎)</button>
-            </div>
-            <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
-                <div><strong>🌾 Ферма</strong></div>
-                <div>Уровень ${userData.farm_level || 1}</div>
-                <button onclick="upgradeBuilding('farm')" style="margin-top: 5px; padding: 5px 10px;">Улучшить (80 💎)</button>
-            </div>
-            <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
-                <div><strong>🪵 Лесопилка</strong></div>
-                <div>Уровень ${userData.sawmill_level || 1}</div>
-                <button onclick="upgradeBuilding('sawmill')" style="margin-top: 5px; padding: 5px 10px;">Улучшить (90 💎)</button>
-            </div>
-            <div style="margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
-                <div><strong>⛏️ Шахта</strong></div>
-                <div>Уровень ${userData.mine_level || 1}</div>
-                <button onclick="upgradeBuilding('mine')" style="margin-top: 5px; padding: 5px 10px;">Улучшить (70 💎)</button>
-            </div>
-        `;
-    }
+💎 Алмазы: ${userData.gems.toFixed(1)}
+🌾 Еда: ${userData.food}
+🪵 Дерево: ${userData.wood}
+⛰️ Камень: ${userData.stone}
 
-    function upgradeBuilding(buildingType) {
-        const upgradeData = {
-            action: 'upgrade_building',
-            building: buildingType,
-            user_id: tg.initDataUnsafe.user?.id
-        };
-        
-        console.log("⚡ Отправляю запрос на улучшение:", upgradeData);
-        tg.sendData(JSON.stringify(upgradeData));
-        
-        tg.showAlert(`Запрос на улучшение ${buildingType} отправлен!`);
-        hideMenus();
-    }
+🏰 Замок: Ур. ${userData.castle_level}
+🌾 Ферма: Ур. ${userData.farm_level}
+🪵 Лесопилка: Ур. ${userData.sawmill_level}
+⛏️ Шахта: Ур. ${userData.mine_level}
 
-    function hideMenus() {
-        document.getElementById('upgradeMenu').style.display = 'none';
-        document.getElementById('overlay').style.display = 'none';
-    }
-
-    function showStats() {
-        if (!userData) return;
-        
-        tg.showPopup({
-            title: "📊 Статистика игрока",
-            message: `💎 Алмазы: ${userData.gems}\n🌾 Еда: ${userData.food}\n🪵 Дерево: ${userData.wood}\n⛰️ Камень: ${userData.stone}\n\n🏰 Замок: Ур. ${userData.castle_level}\n🌾 Ферма: Ур. ${userData.farm_level}\n🪵 Лесопилка: Ур. ${userData.sawmill_level}\n⛏️ Шахта: Ур. ${userData.mine_level}`,
-            buttons: [{ type: "ok" }]
-        });
-    }
-
-    function updateResourcesDisplay() {
-        if (!userData) return;
-        
-        document.getElementById('gems-count').textContent = userData.gems.toFixed(1);
-        document.getElementById('food-count').textContent = userData.food;
-        document.getElementById('wood-count').textContent = userData.wood;
-        document.getElementById('stone-count').textContent = userData.stone;
-        document.getElementById('referrals-count').textContent = userData.referrals_count || 0;
-        
-        // Обновляем уровни зданий
-        const castleElement = document.querySelector('[data-type="castle"] .building-level');
-        const farmElement = document.querySelector('[data-type="farm"] .building-level');
-        const sawmillElement = document.querySelector('[data-type="sawmill"] .building-level');
-        const mineElement = document.querySelector('[data-type="mine"] .building-level');
-        
-        if (castleElement) castleElement.textContent = `Уровень ${userData.castle_level || 1}`;
-        if (farmElement) farmElement.textContent = `Уровень ${userData.farm_level || 1}`;
-        if (sawmillElement) sawmillElement.textContent = `Уровень ${userData.sawmill_level || 1}`;
-        if (mineElement) mineElement.textContent = `Уровень ${userData.mine_level || 1}`;
-    }
-
-    // Обработчик для тестирования вне Telegram
-    if (!window.Telegram) {
-        console.warn("⚠️ Запуск вне Telegram - режим тестирования");
-        window.Telegram = {
-            WebApp: {
-                expand: () => console.log("📱 Expand"),
-                MainButton: {
-                    setText: (text) => console.log("📝 Set text:", text),
-                    show: () => console.log("👀 Show button"),
-                    onClick: (cb) => console.log("🖱️ Button click handler"),
-                    hide: () => console.log("🙈 Hide button")
-                },
-                sendData: (data) => {
-                    console.log("📨 Send data:", data);
-                    // Эмуляция ответа от бота
-                    setTimeout(() => {
-                        if (typeof window.onTelegramData === 'function') {
-                            window.onTelegramData(JSON.parse(data));
-                        }
-                    }, 1000);
-                },
-                showPopup: (options) => console.log("📋 Popup:", options),
-                showAlert: (message) => console.log("⚠️ Alert:", message),
-                initDataUnsafe: { user: { id: 12345, username: 'test_user' } }
-            }
-        };
-    }
-
-    document.addEventListener('DOMContentLoaded', initGame);
-                </script>
+👥 Рефералов: ${userData.referrals_count}
+            `;
+            
+         
