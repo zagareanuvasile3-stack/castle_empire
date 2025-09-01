@@ -385,98 +385,150 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        let userData = {
-            gems: 10.0,
-            food: 200,
-            wood: 150,
-            stone: 100,
-            last_collection: Math.floor(Date.now() / 1000) - 8 * 3600,
-            referrals_count: 0,
-            level: 1
-        };
+         const tg = window.Telegram.WebApp;
+let userData = {
+    gems: 10.0,
+    food: 200,
+    wood: 150,
+    stone: 100,
+    last_collection: Math.floor(Date.now() / 1000) - 43200, // 12 часов назад
+    referrals_count: 0,
+    level: 1
+};
+
+function updateUI() {
+    document.getElementById('gems-count').textContent = userData.gems.toFixed(1);
+    document.getElementById('food-count').textContent = userData.food;
+    document.getElementById('wood-count').textContent = userData.wood;
+    document.getElementById('stone-count').textContent = userData.stone;
+    
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        document.querySelector('.player-stat:last-child').textContent = `👥 ${userData.referrals_count} реф.`;
+    }
+    
+    updateTimer();
+}
+
+function updateTimer() {
+    const now = Math.floor(Date.now() / 1000);
+    const timeSinceLast = now - userData.last_collection;
+    const timeLeft = 12 * 3600 - timeSinceLast;
+    
+    const timerElement = document.getElementById('timer');
+    const collectBtn = document.getElementById('collect-btn');
+    
+    if (timeLeft <= 0) {
+        timerElement.innerHTML = "00:00:00";
+        timerElement.className = "timer ready";
+        collectBtn.disabled = false;
+        collectBtn.innerHTML = '<span class="btn-icon">🎁</span> СОБРАТЬ РЕСУРСЫ!';
+    } else {
+        const hours = Math.floor(timeLeft / 3600);
+        const minutes = Math.floor((timeLeft % 3600) / 60);
+        const seconds = timeLeft % 60;
         
-        function updateUI() {
-            document.getElementById('gems-count').textContent = userData.gems.toFixed(1);
-            document.getElementById('food-count').textContent = userData.food;
-            document.getElementById('wood-count').textContent = userData.wood;
-            document.getElementById('stone-count').textContent = userData.stone;
-            
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                document.querySelector('.player-stat:last-child').textContent = `👥 ${userData.referrals_count} реф.`;
-            }
-            
-            updateTimer();
+        timerElement.innerHTML = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        timerElement.className = "timer";
+        collectBtn.disabled = true;
+        
+        // Обновляем текст кнопки с оставшимся временем
+        if (hours > 0) {
+            collectBtn.innerHTML = `<span class="btn-icon">⏳</span> ЧЕРЕЗ ${hours}Ч ${minutes}М`;
+        } else {
+            collectBtn.innerHTML = `<span class="btn-icon">⏳</span> ЧЕРЕЗ ${minutes}М ${seconds}С`;
         }
+    }
+}
+
+function collectResources() {
+    const now = Math.floor(Date.now() / 1000);
+    const timeSinceLast = now - userData.last_collection;
+    
+    if (timeSinceLast >= 12 * 3600) {
+        userData.gems += 2.0;
+        userData.food += 60;
+        userData.wood += 40;
+        userData.stone += 30;
+        userData.last_collection = now;
         
-        function updateTimer() {
-            const now = Math.floor(Date.now() / 1000);
-            const timeSinceLast = now - userData.last_collection;
-            const timeLeft = 12 * 3600 - timeSinceLast;
-            
-            const timerElement = document.getElementById('timer');
-            const collectBtn = document.getElementById('collect-btn');
-            
-            if (timeLeft <= 0) {
-                timerElement.innerHTML = "00:00:00";
-                timerElement.className = "timer ready";
-                collectBtn.disabled = false;
-                collectBtn.innerHTML = '<span class="btn-icon">🎁</span> СОБРАТЬ РЕСУРСЫ!';
-            } else {
-                const hours = Math.floor(timeLeft / 3600);
-                const minutes = Math.floor((timeLeft % 3600) / 60);
-                const seconds = timeLeft % 60;
-                
-                timerElement.innerHTML = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                timerElement.className = "timer";
-                collectBtn.disabled = true;
-            }
+        updateUI();
+        
+        tg.showPopup({
+            title: "✅ Ресурсы собраны!",
+            message: "Вы получили: 💎2.0, 🌾60, 🪵40, ⛰️30",
+            buttons: [{ type: "ok" }]
+        });
+        
+        // Сохраняем время сбора в базу данных через бота
+        try {
+            const collectData = {
+                action: 'collect_resources',
+                timestamp: now,
+                collected_at: now
+            };
+            tg.sendData(JSON.stringify(collectData));
+        } catch (error) {
+            console.log("Данные отправлены боту");
         }
+    } else {
+        const timeLeft = 12 * 3600 - timeSinceLast;
+        const hours = Math.floor(timeLeft / 3600);
+        const minutes = Math.floor((timeLeft % 3600) / 60);
         
-        function collectResources() {
-            const now = Math.floor(Date.now() / 1000);
-            const timeSinceLast = now - userData.last_collection;
-            
-            if (timeSinceLast >= 12 * 3600) {
-                userData.gems += 2.0;
-                userData.food += 60;
-                userData.wood += 40;
-                userData.stone += 30;
-                userData.last_collection = now;
-                
-                updateUI();
-                
-                tg.showPopup({
-                    title: "✅ Ресурсы собраны!",
-                    message: "Вы получили: 💎2.0, 🌾60, 🪵40, ⛰️30",
-                    buttons: [{ type: "ok" }]
-                });
-            }
+        tg.showAlert(`⏳ Ресурсы будут готовы через ${hours} часов ${minutes} минут`);
+    }
+}
+
+function showReferral() {
+    const userId = tg.initDataUnsafe?.user?.id || 12345;
+    const referralLink = `https://t.me/CastleEmpireBot?start=ref_${userId}`;
+    
+    // Создаем временный элемент для копирования
+    const tempInput = document.createElement('input');
+    tempInput.value = referralLink;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    document.execCommand('copy');
+    document.body.removeChild(tempInput);
+    
+    tg.showPopup({
+        title: "👥 Пригласите друзей",
+        message: `✅ Ссылка скопирована в буфер обмена!\n\n${referralLink}\n\nТеперь вы можете вставить её anywhere!`,
+        buttons: [{ 
+            type: "default", 
+            text: "📤 Поделиться в Telegram",
+            id: "share"
+        }, {
+            type: "ok",
+            text: "Хорошо"
+        }]
+    }, function(buttonId) {
+        if (buttonId === 'share') {
+            const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent("🏰 Присоединяйся к Castle Empire! Развивай свое королевство и получай бонусы!")}`;
+            window.open(shareUrl, '_blank');
         }
-        
-        function showReferral() {
-            const userId = tg.initDataUnsafe?.user?.id || 12345;
-            const referralLink = `https://t.me/CastleEmpireBot?start=ref_${userId}`;
-            
-            tg.showPopup({
-                title: "👥 Пригласите друзей",
-                message: `Ваша реферальная ссылка: ${referralLink}\n\nЗа каждого друга получайте бонусы!`,
-                buttons: [{ type: "ok" }]
-            });
-        }
-        
-        function showUpgrades() {
-            tg.showAlert("⚡ Система улучшений появится в версии 1.1!");
-        }
-        
-        function showStatistics() {
-            const now = Math.floor(Date.now() / 1000);
-            const timeSinceLast = now - userData.last_collection;
-            const timeLeft = Math.max(0, 12 * 3600 - timeSinceLast);
-            const hours = Math.floor(timeLeft / 3600);
-            const minutes = Math.floor((timeLeft % 3600) / 60);
-            
-            const stats = `📊 Ваша статистика:
+    });
+}
+
+function showUpgrades() {
+    tg.showAlert("⚡ Система улучшений появится в версии 1.1!");
+}
+
+function showStatistics() {
+    const now = Math.floor(Date.now() / 1000);
+    const timeSinceLast = now - userData.last_collection;
+    const timeLeft = Math.max(0, 12 * 3600 - timeSinceLast);
+    const hours = Math.floor(timeLeft / 3600);
+    const minutes = Math.floor((timeLeft % 3600) / 60);
+    const seconds = timeLeft % 60;
+    
+    const nextCollection = new Date((userData.last_collection + 12 * 3600) * 1000);
+    const nextCollectionTime = nextCollection.toLocaleTimeString('ru-RU', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+    
+    const stats = `📊 Ваша статистика:
 💎 Алмазы: ${userData.gems.toFixed(1)}
 🌾 Еда: ${userData.food}
 🪵 Дерево: ${userData.wood}
@@ -484,32 +536,57 @@
 
 ⭐ Уровень: ${userData.level}
 👥 Рефералов: ${userData.referrals_count}
-⏰ До сбора: ${hours}ч ${minutes}м`;
-            
-            tg.showPopup({
-                title: "📊 Статистика игрока",
-                message: stats,
-                buttons: [{ type: "ok" }]
-            });
-        }
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            if (tg && tg.expand) {
-                tg.expand();
-                tg.MainButton.setText("ЗАКРЫТЬ");
-                tg.MainButton.show();
-                tg.MainButton.onClick(tg.close);
-            }
-            
-            updateUI();
-            setInterval(updateTimer, 1000);
-            
-            setTimeout(() => {
-                document.querySelectorAll('.resource-card').forEach(card => {
-                    card.classList.add('floating');
-                });
-            }, 1000);
+
+⏰ Следующий сбор: ${nextCollectionTime}
+⌛ Осталось: ${hours}ч ${minutes}м ${seconds}с`;
+    
+    tg.showPopup({
+        title: "📊 Статистика игрока",
+        message: stats,
+        buttons: [{ type: "ok" }]
+    });
+}
+
+// Функция для автоматического обновления времени
+function updateClock() {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    document.getElementById('clock').textContent = `${hours}:${minutes}`;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (tg && tg.expand) {
+        tg.expand();
+        tg.MainButton.setText("ЗАКРЫТЬ");
+        tg.MainButton.show();
+        tg.MainButton.onClick(tg.close);
+    }
+    
+    // Загружаем реальные данные пользователя
+    try {
+        const userRequest = {
+            action: 'get_user_data',
+            timestamp: Date.now()
+        };
+        tg.sendData(JSON.stringify(userRequest));
+    } catch (error) {
+        console.log("Запрос данных отправлен");
+    }
+    
+    updateUI();
+    setInterval(updateTimer, 1000);
+    setInterval(updateClock, 60000); // Обновляем часы каждую минуту
+    updateClock(); // Первоначальное обновление часов
+    
+    setTimeout(() => {
+        document.querySelectorAll('.resource-card').forEach(card => {
+            card.classList.add('floating');
         });
-    </script>
+    }, 1000);
+});
+
+// Добавьте часы в интерфейс (добавьте этот элемент в HTML)
+// <div class="clock" id="clock" style="position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 15px; font-size: 14px;"></div>  </script>
 </body>
     </html>
