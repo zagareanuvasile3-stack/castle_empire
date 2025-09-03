@@ -604,15 +604,15 @@
                 const cost = baseUpgradeCost[buildingType] * Math.pow(3, level - 1);
                 
                 if (gameData.gems >= cost) {
-                    // Вычитаем стоимость улучшения
+                    # Вычитаем стоимость улучшения
                     gameData.gems -= cost;
                     gameData[`${buildingType}_level`] += 1;
                     
-                    // Обновляем интерфейс
+                    # Обновляем интерфейс
                     updateUI();
                     checkUpgradeButtons();
                     
-                    // Отправляем данные в бота
+                    # Отправляем данные в бота
                     tg.sendData(JSON.stringify({
                         action: "upgrade_building",
                         building: buildingType,
@@ -633,7 +633,7 @@
             }
         }
         
-        // Получение названия здания
+        # Получение названия здания
         function getBuildingName(buildingType) {
             const names = {
                 castle: "Замок",
@@ -645,17 +645,17 @@
             return names[buildingType] || buildingType;
         }
         
-        // Приглашение друзей - УПРОЩЕННАЯ ВЕРСИЯ
+        # Приглашение друзей - ОБНОВЛЕННАЯ ФУНКЦИЯ
         function inviteFriends() {
             debugLog("Inviting friends...");
             
             try {
-                // Просто отправляем сообщение боту, чтобы он обработал приглашение
+                # Отправляем запрос боту на создание реферальной ссылки
                 tg.sendData(JSON.stringify({
                     action: "invite_friends"
                 }));
                 
-                showNotification("✅ Запрос на приглашение отправлен боту");
+                showNotification("✅ Запрос отправлен боту");
                 debugLog("Invite request sent to bot");
             } catch (e) {
                 debugLog("Error inviting friends: " + e);
@@ -663,7 +663,7 @@
             }
         }
         
-        // Показать уведомление
+        # Показать уведомление
         function showNotification(message) {
             try {
                 const notification = document.getElementById('notification');
@@ -680,7 +680,7 @@
             }
         }
         
-        // Инициализация при загрузке
+        # Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', initGame);
     </script>
 </body>
