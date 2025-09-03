@@ -361,8 +361,7 @@
             castle_level: 1,
             farm_level: 1,
             sawmill_level: 1,
-            mine_level: 1,
-            bot_username: 'CastleEmpireBot' // значение по умолчанию
+            mine_level: 1
         };
         
         // Базовая производительность для каждого здания на 1 уровне
@@ -390,7 +389,7 @@
             
             if (params.data) {
                 try {
-                    const data = JSON.parse(decodeURIComponent(params.data));
+                    const data = JSON.parse(params.data);
                     debugLog("Parsed data: " + JSON.stringify(data));
                     return data;
                 } catch (e) {
@@ -581,4 +580,108 @@
                 // Перезапускаем таймер
                 startCooldownTimer();
                 
-                showNot
+                showNotification(`✅ Собрано: ${accumulated.gems.toFixed(1)}💎, ${Math.round(accumulated.food)}🌾, ${Math.round(accumulated.wood)}🪵, ${Math.round(accumulated.stone)}⛰️`);
+                
+                debugLog("Resources collected successfully");
+            } catch (e) {
+                debugLog("Error collecting resources: " + e);
+                showNotification("❌ Ошибка при сборе ресурсов");
+            }
+        }
+        
+        // Улучшение здания
+        function upgradeBuilding(buildingType) {
+            debugLog(`Upgrading ${buildingType}...`);
+            
+            try {
+                const level = gameData[`${buildingType}_level`];
+                
+                if (level >= 5) {
+                    showNotification("❌ Достигнут максимальный уровень!");
+                    return;
+                }
+                
+                const cost = baseUpgradeCost[buildingType] * Math.pow(3, level - 1);
+                
+                if (gameData.gems >= cost) {
+                    // Вычитаем стоимость улучшения
+                    gameData.gems -= cost;
+                    gameData[`${buildingType}_level`] += 1;
+                    
+                    // Обновляем интерфейс
+                    updateUI();
+                    checkUpgradeButtons();
+                    
+                    // Отправляем данные в бота
+                    tg.sendData(JSON.stringify({
+                        action: "upgrade_building",
+                        building: buildingType,
+                        cost: cost,
+                        new_level: gameData[`${buildingType}_level`]
+                    }));
+                    
+                    showNotification(`🏗️ ${getBuildingName(buildingType)} улучшен до уровня ${gameData[`${buildingType}_level`]}!`);
+                    
+                    debugLog(`${buildingType} upgraded to level ${gameData[`${buildingType}_level`]}`);
+                } else {
+                    showNotification("❌ Недостаточно алмазов!");
+                    debugLog(`Not enough gems to upgrade ${buildingType}`);
+                }
+            } catch (e) {
+                debugLog(`Error upgrading ${buildingType}: ${e}`);
+                showNotification("❌ Ошибка при улучшении здания");
+            }
+        }
+        
+        // Получение названия здания
+        function getBuildingName(buildingType) {
+            const names = {
+                castle: "Замок",
+                farm: "Ферма",
+                sawmill: "Лесопилка",
+                mine: "Шахта"
+            };
+            
+            return names[buildingType] || buildingType;
+        }
+        
+        // Приглашение друзей - УПРОЩЕННАЯ ВЕРСИЯ
+        function inviteFriends() {
+            debugLog("Inviting friends...");
+            
+            try {
+                // Просто отправляем сообщение боту, чтобы он обработал приглашение
+                tg.sendData(JSON.stringify({
+                    action: "invite_friends"
+                }));
+                
+                showNotification("✅ Запрос на приглашение отправлен боту");
+                debugLog("Invite request sent to bot");
+            } catch (e) {
+                debugLog("Error inviting friends: " + e);
+                showNotification("❌ Ошибка при создании приглашения");
+            }
+        }
+        
+        // Показать уведомление
+        function showNotification(message) {
+            try {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+                
+                debugLog("Notification: " + message);
+            } catch (e) {
+                console.error("Error showing notification: " + e);
+            }
+        }
+        
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
