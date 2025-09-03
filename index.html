@@ -1,1139 +1,584 @@
 <!DOCTYPE html>
-
 <html lang="ru">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Castle Empire</title>
-
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
     <style>
-
         * {
-
             margin: 0;
-
             padding: 0;
-
             box-sizing: border-box;
-
         }
-
         
-
         body {
-
             font-family: 'Arial', sans-serif;
-
             background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-
             min-height: 100vh;
-
             color: white;
-
             padding: 20px;
-
         }
-
         
-
         .container {
-
             max-width: 400px;
-
             margin: 0 auto;
-
         }
-
         
-
         .header {
-
             text-align: center;
-
             margin-bottom: 15px;
-
             padding-bottom: 10px;
-
             border-bottom: 2px solid rgba(255,255,255,0.2);
-
         }
-
         
-
         .header h1 {
-
             font-size: 28px;
-
             margin-bottom: 10px;
-
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-
         }
-
         
-
         .resources {
-
             display: grid;
-
             grid-template-columns: 1fr 1fr;
-
             gap: 10px;
-
             margin-bottom: 15px;
-
         }
-
         
-
         .resource-item {
-
             background: rgba(255, 255, 255, 0.1);
-
             border-radius: 10px;
-
             padding: 12px;
-
             text-align: center;
-
             backdrop-filter: blur(5px);
-
         }
-
         
-
         .resource-icon {
-
             font-size: 20px;
-
             margin-bottom: 5px;
-
         }
-
         
-
         .resource-value {
-
             font-size: 16px;
-
             font-weight: bold;
-
         }
-
         
-
         .buildings {
-
             margin-bottom: 15px;
-
         }
-
         
-
         .building {
-
             background: rgba(255, 255, 255, 0.1);
-
             border-radius: 10px;
-
             padding: 15px;
-
             margin-bottom: 10px;
-
             backdrop-filter: blur(5px);
-
         }
-
         
-
         .building-header {
-
             display: flex;
-
             justify-content: space-between;
-
             align-items: center;
-
             margin-bottom: 10px;
-
         }
-
         
-
         .building-name {
-
             font-weight: bold;
-
             font-size: 16px;
-
         }
-
         
-
         .building-level {
-
             background: rgba(255,255,255,0.2);
-
             padding: 5px 10px;
-
             border-radius: 15px;
-
             font-size: 14px;
-
         }
-
         
-
         .building-production {
-
             margin-bottom: 10px;
-
             font-size: 14px;
-
             opacity: 0.9;
-
         }
-
         
-
         .upgrade-btn {
-
             background: linear-gradient(45deg, #f39c12, #e67e22);
-
             border: none;
-
             border-radius: 20px;
-
             padding: 8px 15px;
-
             color: white;
-
             font-size: 14px;
-
             font-weight: bold;
-
             cursor: pointer;
-
             width: 100%;
-
             transition: transform 0.2s;
-
         }
-
         
-
         .upgrade-btn:active {
-
             transform: scale(0.95);
-
         }
-
         
-
         .upgrade-btn:disabled {
-
             background: rgba(255,255,255,0.2);
-
             cursor: not-allowed;
-
         }
-
         
-
         .collect-section {
-
             text-align: center;
-
             margin-bottom: 15px;
-
         }
-
         
-
         .collect-btn {
-
             background: linear-gradient(45deg, #27ae60, #2ecc71);
-
             border: none;
-
             border-radius: 25px;
-
             padding: 15px 30px;
-
             color: white;
-
             font-size: 18px;
-
             font-weight: bold;
-
             cursor: pointer;
-
             margin-bottom: 10px;
-
             transition: transform 0.2s;
-
             width: 100%;
-
         }
-
         
-
         .collect-btn:active {
-
             transform: scale(0.95);
-
         }
-
         
-
         .collect-btn:disabled {
-
             background: rgba(255,255,255,0.2);
-
             cursor: not-allowed;
-
         }
-
         
-
         .cooldown {
-
             font-size: 14px;
-
             opacity: 0.8;
-
         }
-
         
-
         .invite-section {
-
             text-align: center;
-
             margin-bottom: 15px;
-
         }
-
         
-
         .invite-btn {
-
             background: linear-gradient(45deg, #9b59b6, #8e44ad);
-
             border: none;
-
             border-radius: 25px;
-
             padding: 12px 25px;
-
             color: white;
-
             font-size: 16px;
-
             font-weight: bold;
-
             cursor: pointer;
-
             transition: transform 0.2s;
-
             width: 100%;
-
         }
-
         
-
         .invite-btn:active {
-
             transform: scale(0.95);
-
         }
-
         
-
         .roadmap {
-
             background: rgba(255, 255, 255, 0.1);
-
             border-radius: 10px;
-
             padding: 15px;
-
             backdrop-filter: blur(5px);
-
         }
-
         
-
         .roadmap h3 {
-
             text-align: center;
-
             margin-bottom: 10px;
-
             font-size: 18px;
-
         }
-
         
-
         .roadmap-item {
-
             margin-bottom: 8px;
-
             font-size: 14px;
-
             opacity: 0.9;
-
         }
-
         
-
         .notification {
-
             position: fixed;
-
             top: 20px;
-
             left: 50%;
-
             transform: translateX(-50%);
-
             background: rgba(0, 0, 0, 0.8);
-
             color: white;
-
             padding: 10px 20px;
-
             border-radius: 10px;
-
             z-index: 1000;
-
             opacity: 0;
-
             transition: opacity 0.3s;
-
         }
-
         
-
         .notification.show {
-
             opacity: 1;
-
         }
-
         
-
         .max-level {
-
             color: #f1c40f;
-
             font-weight: bold;
-
         }
-
+        
+        .debug {
+            display: none;
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
     </style>
-
 </head>
-
 <body>
-
     <div class="container">
-
         <div class="header">
-
             <h1>🏰 Castle Empire</h1>
-
         </div>
-
         
-
         <div class="resources">
-
             <div class="resource-item">
-
                 <div class="resource-icon">💎</div>
-
                 <div class="resource-value" id="gems">0</div>
-
             </div>
-
             <div class="resource-item">
-
                 <div class="resource-icon">🌾</div>
-
                 <div class="resource-value" id="food">0</div>
-
             </div>
-
             <div class="resource-item">
-
                 <div class="resource-icon">🪵</div>
-
                 <div class="resource-value" id="wood">0</div>
-
             </div>
-
             <div class="resource-item">
-
                 <div class="resource-icon">⛰️</div>
-
                 <div class="resource-value" id="stone">0</div>
-
             </div>
-
         </div>
-
         
-
         <div class="buildings">
-
             <div class="building">
-
                 <div class="building-header">
-
                     <span class="building-name">🏰 Замок</span>
-
                     <span class="building-level">Ур. <span id="castle-level">1</span>/5</span>
-
                 </div>
-
                 <div class="building-production">Производит: <span id="castle-production">0.1</span> 💎/час</div>
-
                 <button class="upgrade-btn" id="castle-btn" onclick="upgradeBuilding('castle')">
-
                     Улучшить (<span id="castle-cost">50</span>💎)
-
                 </button>
-
             </div>
-
             
-
             <div class="building">
-
                 <div class="building-header">
-
                     <span class="building-name">🌾 Ферма</span>
-
                     <span class="building-level">Ур. <span id="farm-level">1</span>/5</span>
-
                 </div>
-
                 <div class="building-production">Производит: <span id="farm-production">10</span> 🌾/час</div>
-
                 <button class="upgrade-btn" id="farm-btn" onclick="upgradeBuilding('farm')">
-
                     Улучшить (<span id="farm-cost">25</span>💎)
-
                 </button>
-
             </div>
-
             
-
             <div class="building">
-
                 <div class="building-header">
-
                     <span class="building-name">🪵 Лесопилка</span>
-
                     <span class="building-level">Ур. <span id="sawmill-level">1</span>/5</span>
-
                 </div>
-
                 <div class="building-production">Производит: <span id="sawmill-production">20</span> 🪵/час</div>
-
                 <button class="upgrade-btn" id="sawmill-btn" onclick="upgradeBuilding('sawmill')">
-
                     Улучшить (<span id="sawmill-cost">25</span>💎)
-
                 </button>
-
             </div>
-
             
-
             <div class="building">
-
                 <div class="building-header">
-
                     <span class="building-name">⛰️ Шахта</span>
-
                     <span class="building-level">Ур. <span id="mine-level">1</span>/5</span>
-
                 </div>
-
                 <div class="building-production">Производит: <span id="mine-production">15</span> ⛰️/час</div>
-
                 <button class="upgrade-btn" id="mine-btn" onclick="upgradeBuilding('mine')">
-
                     Улучшить (<span id="mine-cost">25</span>💎)
-
                 </button>
-
             </div>
-
         </div>
-
         
-
         <div class="collect-section">
-
             <button class="collect-btn" id="collect-btn" onclick="collectResources()">
-
                 🎯 Собрать ресурсы
-
             </button>
-
             <div class="cooldown" id="cooldown-info">
-
                 Следующий сбор через: 12ч 00м 00с
-
             </div>
-
         </div>
-
         
-
         <div class="invite-section">
-
             <button class="invite-btn" onclick="inviteFriends()">
-
                 👥 Пригласить друзей
-
             </button>
-
         </div>
-
         
-
         <div class="roadmap">
-
             <h3>🚀 Дорожная карта игры</h3>
-
             <div class="roadmap-item">✅ Базовая версия игры</div>
-
             <div class="roadmap-item">🔄 PvP-битвы между игроками</div>
-
             <div class="roadmap-item">🔄 Гильдии и союзы</div>
-
             <div class="roadmap-item">🔄 Мировые события</div>
-
             <div class="roadmap-item">🔄 Уникальные здания</div>
-
         </div>
-
+        
+        <div class="debug" id="debug-info">
+            Debug info will appear here
+        </div>
     </div>
-
     
-
     <div class="notification" id="notification"></div>
 
-
-
     <script>
-
-        const tg = window.Telegram.WebApp;
-
-        tg.expand();
-
+        // Включить отладку для поиска проблем
+        const DEBUG = true;
         
-
-        let gameData = {
-
-            user_id: 0,
-
-            gems: 5.0,
-
-            food: 120,
-
-            wood: 80,
-
-            stone: 60,
-
-            last_collection: 0,
-
-            castle_level: 1,
-
-            farm_level: 1,
-
-            sawmill_level: 1,
-
-            mine_level: 1
-
-        };
-
-        
-
-        // Базовая производительность для каждого здания на 1 уровне
-
-        const baseProduction = {
-
-            castle: 0.1,
-
-            farm: 10,
-
-            sawmill: 20,
-
-            mine: 15
-
-        };
-
-        
-
-        // Базовая стоимость улучшения для каждого здания
-
-        const baseUpgradeCost = {
-
-            castle: 50,
-
-            farm: 25,
-
-            sawmill: 25,
-
-            mine: 25
-
-        };
-
-        
-
-        // Получаем данные из URL параметров
-
-        function getUrlParams() {
-
-            const urlSearchParams = new URLSearchParams(window.location.search);
-
-            const params = Object.fromEntries(urlSearchParams.entries());
-
-            
-
-            if (params.data) {
-
-                try {
-
-                    return JSON.parse(params.data);
-
-                } catch (e) {
-
-                    console.error("Error parsing data:", e);
-
+        function debugLog(message) {
+            if (DEBUG) {
+                console.log(message);
+                const debugInfo = document.getElementById('debug-info');
+                if (debugInfo) {
+                    debugInfo.style.display = 'block';
+                    debugInfo.innerHTML += message + '<br>';
                 }
-
             }
-
+        }
+        
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        debugLog("WebApp initialized");
+        
+        let gameData = {
+            user_id: 0,
+            gems: 5.0,
+            food: 120,
+            wood: 80,
+            stone: 60,
+            last_collection: 0,
+            castle_level: 1,
+            farm_level: 1,
+            sawmill_level: 1,
+            mine_level: 1,
+            bot_username: 'CastleEmpireBot' // значение по умолчанию
+        };
+        
+        // Базовая производительность для каждого здания на 1 уровне
+        const baseProduction = {
+            castle: 0.1,
+            farm: 10,
+            sawmill: 20,
+            mine: 15
+        };
+        
+        // Базовая стоимость улучшения для каждого здания
+        const baseUpgradeCost = {
+            castle: 50,
+            farm: 25,
+            sawmill: 25,
+            mine: 25
+        };
+        
+        // Получаем данные из URL параметров
+        function getUrlParams() {
+            const urlSearchParams = new URLSearchParams(window.location.search);
+            const params = Object.fromEntries(urlSearchParams.entries());
             
-
+            debugLog("URL params: " + JSON.stringify(params));
+            
+            if (params.data) {
+                try {
+                    const data = JSON.parse(decodeURIComponent(params.data));
+                    debugLog("Parsed data: " + JSON.stringify(data));
+                    return data;
+                } catch (e) {
+                    debugLog("Error parsing data: " + e);
+                }
+            }
+            
             return null;
-
         }
-
         
-
         // Инициализация игры
-
         function initGame() {
-
+            debugLog("Initializing game...");
+            
             const urlData = getUrlParams();
-
             
-
             if (urlData) {
-
                 gameData = {...gameData, ...urlData};
-
-                updateUI();
-
-                startCooldownTimer();
-
-                checkUpgradeButtons();
-
-            }
-
-        }
-
-        
-
-        // Обновление интерфейса
-
-        function updateUI() {
-
-            document.getElementById('gems').textContent = gameData.gems.toFixed(1);
-
-            document.getElementById('food').textContent = gameData.food;
-
-            document.getElementById('wood').textContent = gameData.wood;
-
-            document.getElementById('stone').textContent = gameData.stone;
-
-            
-
-            // Обновляем информацию о зданиях
-
-            updateBuildingInfo('castle');
-
-            updateBuildingInfo('farm');
-
-            updateBuildingInfo('sawmill');
-
-            updateBuildingInfo('mine');
-
-        }
-
-        
-
-        // Обновление информации о здании
-
-        function updateBuildingInfo(buildingType) {
-
-            const level = gameData[`${buildingType}_level`];
-
-            document.getElementById(`${buildingType}-level`).textContent = level;
-
-            
-
-            // Рассчитываем текущую производительность (удваивается с каждым уровнем)
-
-            const production = baseProduction[buildingType] * Math.pow(2, level - 1);
-
-            document.getElementById(`${buildingType}-production`).textContent = production.toFixed(1);
-
-            
-
-            // Рассчитываем стоимость улучшения (утраивается с каждым уровнем)
-
-            const cost = baseUpgradeCost[buildingType] * Math.pow(3, level - 1);
-
-            document.getElementById(`${buildingType}-cost`).textContent = cost;
-
-        }
-
-        
-
-        // Проверка возможности улучшения зданий
-
-        function checkUpgradeButtons() {
-
-            checkBuildingUpgrade('castle');
-
-            checkBuildingUpgrade('farm');
-
-            checkBuildingUpgrade('sawmill');
-
-            checkBuildingUpgrade('mine');
-
-        }
-
-        
-
-        function checkBuildingUpgrade(buildingType) {
-
-            const level = gameData[`${buildingType}_level`];
-
-            const btn = document.getElementById(`${buildingType}-btn`);
-
-            
-
-            if (level >= 5) {
-
-                btn.disabled = true;
-
-                btn.innerHTML = '<span class="max-level">Макс. уровень</span>';
-
-                return;
-
-            }
-
-            
-
-            const cost = baseUpgradeCost[buildingType] * Math.pow(3, level - 1);
-
-            
-
-            if (gameData.gems >= cost) {
-
-                btn.disabled = false;
-
+                debugLog("Game data loaded: " + JSON.stringify(gameData));
             } else {
-
-                btn.disabled = true;
-
+                debugLog("No data from URL, using defaults");
             }
-
-        }
-
-        
-
-        // Таймер отсчета до следующего сбора
-
-        function startCooldownTimer() {
-
-            const cooldownInfo = document.getElementById('cooldown-info');
-
-            const collectBtn = document.getElementById('collect-btn');
-
             
-
-            const lastCollection = gameData.last_collection;
-
-            const now = Math.floor(Date.now() / 1000);
-
-            const cooldown = 12 * 60 * 60; // 12 часов в секундах
-
-            const timePassed = now - lastCollection;
-
-            const timeLeft = cooldown - timePassed;
-
-            
-
-            if (timeLeft <= 0) {
-
-                cooldownInfo.textContent = "Ресурсы готовы к сбору!";
-
-                collectBtn.disabled = false;
-
-            } else {
-
-                collectBtn.disabled = true;
-
-                
-
-                const timerInterval = setInterval(() => {
-
-                    const now = Math.floor(Date.now() / 1000);
-
-                    const timePassed = now - lastCollection;
-
-                    const timeLeft = cooldown - timePassed;
-
-                    
-
-                    if (timeLeft <= 0) {
-
-                        clearInterval(timerInterval);
-
-                        cooldownInfo.textContent = "Ресурсы готовы к сбору!";
-
-                        collectBtn.disabled = false;
-
-                        return;
-
-                    }
-
-                    
-
-                    const hours = Math.floor(timeLeft / 3600);
-
-                    const minutes = Math.floor((timeLeft % 3600) / 60);
-
-                    const seconds = timeLeft % 60;
-
-                    
-
-                    cooldownInfo.textContent = `Следующий сбор через: ${hours}ч ${minutes}м ${seconds}с`;
-
-                }, 1000);
-
-            }
-
-        }
-
-        
-
-        // Расчет накопленных ресурсов
-
-        function calculateAccumulatedResources() {
-
-            const now = Math.floor(Date.now() / 1000);
-
-            const timePassed = now - gameData.last_collection;
-
-            const hoursPassed = timePassed / 3600;
-
-            
-
-            // Максимальное время накопления - 12 часов
-
-            const effectiveHours = Math.min(hoursPassed, 12);
-
-            
-
-            return {
-
-                gems: effectiveHours * baseProduction.castle * Math.pow(2, gameData.castle_level - 1),
-
-                food: effectiveHours * baseProduction.farm * Math.pow(2, gameData.farm_level - 1),
-
-                wood: effectiveHours * baseProduction.sawmill * Math.pow(2, gameData.sawmill_level - 1),
-
-                stone: effectiveHours * baseProduction.mine * Math.pow(2, gameData.mine_level - 1)
-
-            };
-
-        }
-
-        
-
-        // Сбор ресурсов
-
-        function collectResources() {
-
-            const accumulated = calculateAccumulatedResources();
-
-            
-
-            // Обновляем данные игры
-
-            gameData.gems += accumulated.gems;
-
-            gameData.food += accumulated.food;
-
-            gameData.wood += accumulated.wood;
-
-            gameData.stone += accumulated.stone;
-
-            gameData.last_collection = Math.floor(Date.now() / 1000);
-
-            
-
-            // Обновляем интерфейс
-
             updateUI();
-
-            
-
-            // Отправляем данные в бота
-
-            tg.sendData(JSON.stringify({
-
-                action: "collect_resources"
-
-            }));
-
-            
-
-            // Перезапускаем таймер
-
             startCooldownTimer();
-
+            checkUpgradeButtons();
             
-
-            showNotification(`✅ Собрано: ${accumulated.gems.toFixed(1)}💎, ${Math.round(accumulated.food)}🌾, ${Math.round(accumulated.wood)}🪵, ${Math.round(accumulated.stone)}⛰️`);
-
+            debugLog("Game initialized successfully");
         }
-
         
-
-        // Улучшение здания
-
-        function upgradeBuilding(buildingType) {
-
-            const level = gameData[`${buildingType}_level`];
-
+        // Обновление интерфейса
+        function updateUI() {
+            debugLog("Updating UI...");
             
-
-            if (level >= 5) {
-
-                showNotification("❌ Достигнут максимальный уровень!");
-
-                return;
-
+            try {
+                document.getElementById('gems').textContent = gameData.gems.toFixed(1);
+                document.getElementById('food').textContent = gameData.food;
+                document.getElementById('wood').textContent = gameData.wood;
+                document.getElementById('stone').textContent = gameData.stone;
+                
+                // Обновляем информацию о зданиях
+                updateBuildingInfo('castle');
+                updateBuildingInfo('farm');
+                updateBuildingInfo('sawmill');
+                updateBuildingInfo('mine');
+                
+                debugLog("UI updated successfully");
+            } catch (e) {
+                debugLog("Error updating UI: " + e);
             }
-
-            
-
-            const cost = baseUpgradeCost[buildingType] * Math.pow(3, level - 1);
-
-            
-
-            if (gameData.gems >= cost) {
-
-                // Вычитаем стоимость улучшения
-
-                gameData.gems -= cost;
-
-                gameData[`${buildingType}_level`] += 1;
-
-                
-
-                // Обновляем интерфейс
-
-                updateUI();
-
-                checkUpgradeButtons();
-
-                
-
-                // Отправляем данные в бота
-
-                tg.sendData(JSON.stringify({
-
-                    action: "upgrade_building",
-
-                    building: buildingType,
-
-                    cost: cost,
-
-                    new_level: gameData[`${buildingType}_level`]
-
-                }));
-
-                
-
-                showNotification(`🏗️ ${getBuildingName(buildingType)} улучшен до уровня ${gameData[`${buildingType}_level`]}!`);
-
-            } else {
-
-                showNotification("❌ Недостаточно алмазов!");
-
-            }
-
         }
-
         
-
-        // Получение названия здания
-
-        function getBuildingName(buildingType) {
-
-            const names = {
-
-                castle: "Замок",
-
-                farm: "Ферма",
-
-                sawmill: "Лесопилка",
-
-                mine: "Шахта"
-
+        // Обновление информации о здании
+        function updateBuildingInfo(buildingType) {
+            try {
+                const level = gameData[`${buildingType}_level`];
+                document.getElementById(`${buildingType}-level`).textContent = level;
+                
+                // Рассчитываем текущую производительность (удваивается с каждым уровнем)
+                const production = baseProduction[buildingType] * Math.pow(2, level - 1);
+                document.getElementById(`${buildingType}-production`).textContent = production.toFixed(1);
+                
+                // Рассчитываем стоимость улучшения (утраивается с каждым уровнем)
+                const cost = baseUpgradeCost[buildingType] * Math.pow(3, level - 1);
+                document.getElementById(`${buildingType}-cost`).textContent = cost;
+            } catch (e) {
+                debugLog(`Error updating ${buildingType} info: ${e}`);
+            }
+        }
+        
+        // Проверка возможности улучшения зданий
+        function checkUpgradeButtons() {
+            checkBuildingUpgrade('castle');
+            checkBuildingUpgrade('farm');
+            checkBuildingUpgrade('sawmill');
+            checkBuildingUpgrade('mine');
+        }
+        
+        function checkBuildingUpgrade(buildingType) {
+            try {
+                const level = gameData[`${buildingType}_level`];
+                const btn = document.getElementById(`${buildingType}-btn`);
+                
+                if (level >= 5) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="max-level">Макс. уровень</span>';
+                    return;
+                }
+                
+                const cost = baseUpgradeCost[buildingType] * Math.pow(3, level - 1);
+                
+                if (gameData.gems >= cost) {
+                    btn.disabled = false;
+                } else {
+                    btn.disabled = true;
+                }
+            } catch (e) {
+                debugLog(`Error checking ${buildingType} upgrade: ${e}`);
+            }
+        }
+        
+        // Таймер отсчета до следующего сбора
+        function startCooldownTimer() {
+            debugLog("Starting cooldown timer...");
+            
+            try {
+                const cooldownInfo = document.getElementById('cooldown-info');
+                const collectBtn = document.getElementById('collect-btn');
+                
+                const lastCollection = gameData.last_collection;
+                const now = Math.floor(Date.now() / 1000);
+                const cooldown = 12 * 60 * 60; // 12 часов в секундах
+                const timePassed = now - lastCollection;
+                const timeLeft = cooldown - timePassed;
+                
+                if (timeLeft <= 0) {
+                    cooldownInfo.textContent = "Ресурсы готовы к сбору!";
+                    collectBtn.disabled = false;
+                    debugLog("Resources ready to collect");
+                } else {
+                    collectBtn.disabled = true;
+                    debugLog(`Resources not ready, time left: ${timeLeft}s`);
+                    
+                    const timerInterval = setInterval(() => {
+                        const now = Math.floor(Date.now() / 1000);
+                        const timePassed = now - lastCollection;
+                        const timeLeft = cooldown - timePassed;
+                        
+                        if (timeLeft <= 0) {
+                            clearInterval(timerInterval);
+                            cooldownInfo.textContent = "Ресурсы готовы к сбору!";
+                            collectBtn.disabled = false;
+                            debugLog("Resources ready to collect");
+                            return;
+                        }
+                        
+                        const hours = Math.floor(timeLeft / 3600);
+                        const minutes = Math.floor((timeLeft % 3600) / 60);
+                        const seconds = timeLeft % 60;
+                        
+                        cooldownInfo.textContent = `Следующий сбор через: ${hours}ч ${minutes}м ${seconds}с`;
+                    }, 1000);
+                }
+            } catch (e) {
+                debugLog("Error starting cooldown timer: " + e);
+            }
+        }
+        
+        // Расчет накопленных ресурсов
+        function calculateAccumulatedResources() {
+            const now = Math.floor(Date.now() / 1000);
+            const timePassed = now - gameData.last_collection;
+            const hoursPassed = timePassed / 3600;
+            
+            // Максимальное время накопления - 12 часов
+            const effectiveHours = Math.min(hoursPassed, 12);
+            
+            return {
+                gems: effectiveHours * baseProduction.castle * Math.pow(2, gameData.castle_level - 1),
+                food: effectiveHours * baseProduction.farm * Math.pow(2, gameData.farm_level - 1),
+                wood: effectiveHours * baseProduction.sawmill * Math.pow(2, gameData.sawmill_level - 1),
+                stone: effectiveHours * baseProduction.mine * Math.pow(2, gameData.mine_level - 1)
             };
-
+        }
+        
+        // Сбор ресурсов
+        function collectResources() {
+            debugLog("Collecting resources...");
             
-
-            return names[buildingType] || buildingType;
-
-        }
-
-        
-
-        // Приглашение друзей
-
-        function inviteFriends() {
-
-            tg.openTelegramLink(`https://t.me/${tg.initDataUnsafe.user.username}?start=ref_${gameData.user_id}`);
-
-        }
-
-        
-
-        // Показать уведомление
-
-        function showNotification(message) {
-
-            const notifi
+            try {
+                const accumulated = calculateAccumulatedResources();
+                
+                // Обновляем данные игры
+                gameData.gems += accumulated.gems;
+                gameData.food += accumulated.food;
+                gameData.wood += accumulated.wood;
+                gameData.stone += accumulated.stone;
+                gameData.last_collection = Math.floor(Date.now() / 1000);
+                
+                // Обновляем интерфейс
+                updateUI();
+                
+                // Отправляем данные в бота
+                tg.sendData(JSON.stringify({
+                    action: "collect_resources"
+                }));
+                
+                // Перезапускаем таймер
+                startCooldownTimer();
+                
+                showNot
